@@ -1,2 +1,4 @@
 psycopg2
 flask
+mfrc522==0.0.7
+
