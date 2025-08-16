@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supermarket Online</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #4e73df;
+      --secondary: #858796;
+      --success: #1cc88a;
+      --light: #f8f9fc;
+      --dark: #5a5c69;
+    }
+    
+    body {
+      background-color: #f8f9fc;
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding-bottom: 2rem;
+    }
+    
+    .navbar {
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+      transition: transform 0.3s;
+      overflow: hidden;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .product-img {
+      height: 150px;
+      object-fit: contain;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .cart-item {
+      border-bottom: 1px solid #e3e6f0;
+      padding: 15px 0;
+    }
+    
+    .stock-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+    }
+    
+    .spinner-container {
+      display: flex;
+      justify-content: center;
+      padding: 2rem;
+    }
+    
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1050;
+    }
+    
+    .skeleton-loader {
+      height: 150px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .product-card {
+      transition: all 0.3s ease;
+    }
+    
+    .product-card:hover {
+      box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+    }
+    
+    .cart-icon {
+      position: relative;
+    }
+    
+    .cart-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--success);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+    
+    .search-container {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+    
+    .search-input {
+      padding-left: 40px;
+      border-radius: 50px;
+    }
+    
+    .category-badge {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .category-badge.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .delivery-option {
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid #dee2e6;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+    }
+    
+    .delivery-option:hover, .delivery-option.selected {
+      border-color: var(--primary);
+      background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .delivery-option i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: var(--primary);
+    }
+    
+    .qr-code-container {
+      text-align: center;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    
+    .qr-code {
+      display: inline-block;
+      padding: 10px;
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 5px;
+    }
+    
+    .address-input {
+      margin-top: 15px;
+    }
+    
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .step {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #dee2e6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 10px;
+      font-weight: bold;
+    }
+    
+    .step.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: #dee2e6;
+      margin: 0 -5px;
+      position: relative;
+      top: 15px;
+    }
+    
+    .step-label {
+      text-align: center;
+      font-size: 0.8rem;
+      margin-top: 5px;
+    }
+    
+    #qrcode {
+      display: inline-block;
+    }
+    
+    .stock-update-animation {
+      animation: stockUpdate 1s ease;
+    }
+    
+    @keyframes stockUpdate {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-shopping-cart me-2"></i>Supermarket Online
+      </a>
+      <div class="d-flex align-items-center">
+        <div class="text-white me-3 cart-icon">
+          <i class="fas fa-shopping-cart me-1"></i>
+          <span id="cart-count" class="cart-count">0</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container py-4">
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="search-container">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="search-input" class="form-control search-input" placeholder="Search products...">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge bg-secondary category-badge active" data-category="all">All</span>
+          <span class="badge bg-secondary category-badge" data-category="dairy">Dairy</span>
+          <span class="badge bg-secondary category-badge" data-category="bakery">Bakery</span>
+          <span class="badge bg-secondary category-badge" data-category="produce">Produce</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <!-- Products Section -->
+      <div class="col-lg-8">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Available Products</h6>
+            <span id="products-count" class="badge bg-primary">Loading...</span>
+          </div>
+          <div class="card-body">
+            <div class="row" id="products-container">
+              <!-- Skeleton loaders while products load -->
+              <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                  <div class="skeleton-loader"></div>
+                  <div class="card-body">
+                    <div class="skeleton-loader" style="height: 20px; width: 70%; margin-bottom: 10px;"></div>
+                    <div class="skeleton-loader" style="height: 20px; width: 50%; margin-bottom: 15px;"></div>
+                    <div class="skeleton-loader" style="height: 40px;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                  <div class="skeleton-loader"></div>
+                  <div class="card-body">
+                    <div class="skeleton-loader" style="height: 20px; width: 70%; margin-bottom: 10px;"></div>
+                    <div class="skeleton-loader" style="height: 20px; width: 50%; margin-bottom: 15px;"></div>
+                    <div class="skeleton-loader" style="height: 40px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shopping Cart -->
+      <div class="col-lg-4">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Your Shopping Cart</h6>
+            <button id="clear-cart-btn" class="btn btn-sm btn-outline-danger">Clear Cart</button>
+          </div>
+          <div class="card-body">
+            <div id="cart-items" class="mb-4" style="max-height: 300px; overflow-y: auto;">
+              <div class="text-center py-5 text-muted" id="empty-cart">
+                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                <p>Your cart is empty</p>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5>Subtotal:</h5>
+              <h5>$<span id="cart-subtotal">0.00</span></h5>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5>Tax (8%):</h5>
+              <h5>$<span id="cart-tax">0.00</span></h5>
+            </div>
+            
+            <hr>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h4>Total:</h4>
+              <h4 class="text-primary">$<span id="cart-total">0.00</span></h4>
+            </div>
+            
+            <button id="checkout-btn" class="btn btn-primary btn-block btn-lg">
+              <i class="fas fa-check me-2"></i>Proceed to Checkout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-container">
+    <div class="toast align-items-center text-white bg-success border-0" 
+         role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-check-circle me-2"></i> Item added to cart!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delivery Options Modal -->
+  <div class="modal fade" id="deliveryOptionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="fas fa-truck me-2"></i>Delivery Options</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="step-indicator">
+            <div class="step active">1</div>
+            <div class="step-line"></div>
+            <div class="step">2</div>
+          </div>
+          <div class="step-label">
+            <span style="margin-left: 10px;">Select Option</span>
+            <span style="margin-left: 90px;">Complete</span>
+          </div>
+          
+          <h5 class="text-center mb-4">Choose your preferred delivery method</h5>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="delivery-option" id="pickup-option">
+                <i class="fas fa-store"></i>
+                <h5>Self Pick-up</h5>
+                <p>Pick up your order at our store</p>
+                <p class="text-success">No additional fees</p>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="delivery-option" id="delivery-option">
+                <i class="fas fa-truck"></i>
+                <h5>Home Delivery</h5>
+                <p>We'll deliver to your address</p>
+                <p class="text-danger">+ $4.00 delivery fee</p>
+              </div>
+            </div>
+          </div>
+          
+          <div id="address-section" class="mt-4" style="display: none;">
+            <h5 class="mb-3">Delivery Address</h5>
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="full-name" placeholder="John Smith">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Street Address</label>
+              <input type="text" class="form-control" id="street-address" placeholder="123 Main St">
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">City</label>
+                <input type="text" class="form-control" id="city" placeholder="New York">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">State</label>
+                <input type="text" class="form-control" id="state" placeholder="NY">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">ZIP</label>
+                <input type="text" class="form-control" id="zip" placeholder="10001">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="form-control" id="phone" placeholder="(555) 123-4567">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirm-order-btn" disabled>Confirm Order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Order Successful!</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Your order has been placed successfully!</p>
+          <p><strong>Order ID:</strong> <span id="order-id"></span></p>
+          <p><strong>Total:</strong> $<span id="order-total"></span></p>
+          <p id="delivery-method"></p>
+          
+          <div id="pickup-display" style="display: none;">
+            <div class="qr-code-container">
+              <p>Please present this QR code at the store for pickup:</p>
+              <div id="qrcode" class="qr-code"></div>
+              <p class="mt-3 text-muted">Scan this code at our self-pickup counter</p>
+            </div>
+          </div>
+          
+          <div id="delivery-display" style="display: none;">
+            <p><strong>Delivery Address:</strong></p>
+            <p id="delivery-address"></p>
+            <p class="mt-3"><i class="fas fa-clock me-2"></i>Estimated delivery: 45-60 minutes</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" data-bs-dismiss="modal">Continue Shopping</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Product images with valid URLs
+    const productImages = {
+      'Milk': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+      'Bread': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+      'Eggs': 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+      'Cheese': 'https://as1.ftcdn.net/v2/jpg/02/49/07/14/1000_F_249071457_q6THAJVHBUgoS39iCSB0o4KNvFgQOPb5.jpg',
+      'Butter': 'https://as1.ftcdn.net/v2/jpg/02/10/30/54/1000_F_210305493_vSBsVrBRyJvLBR5JLKmISAEy3xjfcERN.jpg',
+      'Yogurt': 'https://images.unsplash.com/photo-1596733430284-f7437764b1a9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+      'Apple': 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+      'Banana': 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+      'Orange': 'https://images.unsplash.com/photo-1547514701-42782101795e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80'
+    };
+
+    // Product categories
+    const productCategories = {
+      'Milk': 'dairy',
+      'Bread': 'bakery',
+      'Eggs': 'dairy',
+      'Cheese': 'dairy',
+      'Butter': 'dairy',
+      'Yogurt': 'dairy',
+      'Apple': 'fruit',
+      'Banana': 'fruit',
+      'Orange': 'fruit'
+    };
+
+    // State management
+    const state = {
+      cart: [],
+      products: [],
+      filteredProducts: [],
+      currentCategory: 'all',
+      searchQuery: '',
+      deliveryOption: null,
+      deliveryAddress: null
+    };
+
+    // Initialize application
+    document.addEventListener('DOMContentLoaded', () => {
+      initEventListeners();
+      loadProducts();
+      loadCartFromStorage();
+    });
+
+    // Load products from backend
+    function loadProducts() {
+      fetch('/api/products')
+        .then(response => response.json())
+        .then(products => {
+          state.products = products;
+          state.filteredProducts = [...products];
+          renderProducts();
+          updateProductsCount();
+        })
+        .catch(error => {
+          console.error('Error loading products:', error);
+          // Fallback to sample data if API fails
+          state.products = [
+            { id: '1', name: 'Milk', price: 3.00, stock: 50, category: 'dairy', barcode: '1234567890' },
+            { id: '2', name: 'Bread', price: 2.00, stock: 100, category: 'bakery' },
+            { id: '3', name: 'Eggs', price: 3.50, stock: 75, category: 'dairy' },
+            { id: '4', name: 'Cheese', price: 4.50, stock: 40, category: 'dairy' },
+            { id: '5', name: 'Butter', price: 2.75, stock: 30, category: 'dairy' },
+            { id: '6', name: 'Yogurt', price: 1.25, stock: 60, category: 'dairy' },
+            { id: '7', name: 'Apple', price: 0.75, stock: 120, category: 'produce' },
+            { id: '8', name: 'Banana', price: 0.50, stock: 150, category: 'produce' },
+            { id: '9', name: 'Orange', price: 0.85, stock: 100, category: 'produce' }
+          ];
+          state.filteredProducts = [...state.products];
+          renderProducts();
+          updateProductsCount();
+        });
+    }
+          
+    // Render products
+    function renderProducts() {
+      const container = document.getElementById('products-container');
+      container.innerHTML = '';
+      
+      if (state.filteredProducts.length === 0) {
+        container.innerHTML = `
+          <div class="col-12 text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No products found</h4>
+            <p class="text-muted">Try adjusting your search or category filter</p>
+          </div>
+        `;
+        return;
+      }
+      
+      state.filteredProducts.forEach(product => {
+        const stockClass = product.stock > 20 ? 'bg-success' : 
+                          product.stock > 0 ? 'bg-warning text-dark' : 'bg-danger';
+        
+        const productEl = document.createElement('div');
+        productEl.className = 'col-md-6 mb-4';
+        productEl.innerHTML = `
+          <div class="card h-100 product-card">
+            <div class="position-relative">
+              <img src="${productImages[product.name]}" 
+                   class="card-img-top product-img" alt="${product.name}">
+              <span class="badge ${stockClass} stock-badge">Stock: ${product.stock}</span>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">${product.name}</h5>
+              <p class="card-text">$${product.price.toFixed(2)}</p>
+              <button class="btn btn-primary w-100 add-to-cart-btn"
+                      data-id="${product.id}"
+                      data-name="${product.name}"
+                      data-price="${product.price}"
+                      ${product.stock === 0 ? 'disabled' : ''}>
+                <i class="fas fa-cart-plus me-2"></i>
+                ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+              </button>
+            </div>
+          </div>
+        `;
+        
+        container.appendChild(productEl);
+      });
+    }
+    
+    // Add to cart
+    function addToCart(id, name, price) {
+      const product = state.products.find(p => p.id === id);
+      
+      if (!product || product.stock === 0) {
+        return;
+      }
+      
+      const existingItem = state.cart.find(item => item.id === id);
+      
+      if (existingItem) {
+        // Check stock before adding
+        if (existingItem.quantity < product.stock) {
+          existingItem.quantity++;
+        } else {
+          alert(`Cannot add more ${name}. Only ${product.stock} available.`);
+          return;
+        }
+      } else {
+        state.cart.push({ id, name, price, quantity: 1 });
+      }
+      
+      updateCart();
+      showToast();
+      saveCartToStorage();
+    }
+    
+    // Update cart display
+    function updateCart() {
+      const cartList = document.getElementById('cart-items');
+      const emptyCart = document.getElementById('empty-cart');
+      const cartCount = document.getElementById('cart-count');
+      const subtotalEl = document.getElementById('cart-subtotal');
+      const taxEl = document.getElementById('cart-tax');
+      const totalEl = document.getElementById('cart-total');
+      
+      // Handle empty cart
+      if (emptyCart) {
+        emptyCart.style.display = state.cart.length > 0 ? 'none' : 'block';
+      }
+      
+      // Update cart items
+      cartList.innerHTML = '';
+      let subtotal = 0;
+      
+      state.cart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        
+        const itemEl = document.createElement('div');
+        itemEl.className = 'cart-item';
+        itemEl.innerHTML = `
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="mb-1">${item.name}</h6>
+              <div class="d-flex align-items-center mt-2">
+                <button class="btn btn-sm btn-outline-secondary cart-quantity-btn" 
+                        data-index="${index}" 
+                        data-change="-1">
+                  <i class="fas fa-minus"></i>
+                </button>
+                <span class="mx-2">${item.quantity}</span>
+                <button class="btn btn-sm btn-outline-secondary cart-quantity-btn" 
+                        data-index="${index}" 
+                        data-change="1">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <h6>$${itemTotal.toFixed(2)}</h6>
+              <button class="btn btn-sm btn-danger mt-2 cart-remove-btn" 
+                      data-index="${index}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        cartList.appendChild(itemEl);
+      });
+      
+      // Calculate totals (8% GST)
+      const tax = subtotal * 0.08;
+      const total = subtotal + tax;
+      
+      // Update display
+      cartCount.textContent = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+      subtotalEl.textContent = subtotal.toFixed(2);
+      taxEl.textContent = tax.toFixed(2);
+      totalEl.textContent = total.toFixed(2);
+    }
+    
+    // Handle cart quantity changes
+    function handleQuantityChange(index, change) {
+      const item = state.cart[index];
+      const product = state.products.find(p => p.id === item.id);
+      
+      if (!product) return;
+      
+      const newQuantity = item.quantity + change;
+      
+      if (newQuantity <= 0) {
+        state.cart.splice(index, 1);
+      } else if (newQuantity > product.stock) {
+        alert(`Cannot add more ${item.name}. Only ${product.stock} available.`);
+      } else {
+        item.quantity = newQuantity;
+      }
+      
+      updateCart();
+      saveCartToStorage();
+    }
+    
+    // Handle cart item removal
+    function handleRemoveItem(index) {
+      state.cart.splice(index, 1);
+      updateCart();
+      saveCartToStorage();
+    }
+    
+    // Clear cart
+    function clearCart() {
+      state.cart = [];
+      updateCart();
+      saveCartToStorage();
+    }
+    
+    // Show delivery options
+    function showDeliveryOptions() {
+      if (state.cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+      
+      // Reset delivery options
+      state.deliveryOption = null;
+      state.deliveryAddress = null;
+      
+      // Reset UI
+      document.getElementById('address-section').style.display = 'none';
+      document.getElementById('confirm-order-btn').disabled = true;
+      document.querySelectorAll('.delivery-option').forEach(option => {
+        option.classList.remove('selected');
+      });
+      
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('deliveryOptionsModal'));
+      modal.show();
+    }
+    
+    // Finalize order
+    function finalizeOrder() {
+      // Generate random order ID
+      const orderId = 'ORD-' + Math.floor(Math.random() * 1000000);
+      let total = parseFloat(document.getElementById('cart-total').textContent);
+      
+      // Add delivery fee if needed
+      if (state.deliveryOption === 'delivery') {
+        total += 4.00;
+      }
+      
+      // Update stock quantities
+      updateStockQuantities();
+      
+      // Show success modal
+      showSuccessModal(orderId, total.toFixed(2));
+      
+      // Clear cart
+      clearCart();
+    }
+    
+    // Update stock quantities after purchase
+    function updateStockQuantities() {
+      // Create a copy of the cart to avoid modifying during iteration
+      const cartCopy = [...state.cart];
+      
+      cartCopy.forEach(item => {
+        const product = state.products.find(p => p.id === item.id);
+        if (product) {
+          // Reduce stock by the purchased quantity
+          product.stock -= item.quantity;
+          
+          // Ensure stock doesn't go negative
+          if (product.stock < 0) product.stock = 0;
+          
+          // Find the product card and update its stock display
+          const productCards = document.querySelectorAll('.product-card');
+          productCards.forEach(card => {
+            const productName = card.querySelector('.card-title').textContent;
+            if (productName === product.name) {
+              const stockBadge = card.querySelector('.stock-badge');
+              stockBadge.textContent = `Stock: ${product.stock}`;
+              
+              // Update stock badge color based on new quantity
+              if (product.stock > 20) {
+                stockBadge.className = 'badge bg-success stock-badge';
+              } else if (product.stock > 0) {
+                stockBadge.className = 'badge bg-warning text-dark stock-badge';
+              } else {
+                stockBadge.className = 'badge bg-danger stock-badge';
+              }
+              
+              // Add animation to highlight the change
+              stockBadge.classList.add('stock-update-animation');
+              setTimeout(() => {
+                stockBadge.classList.remove('stock-update-animation');
+              }, 1000);
+              
+              // Disable button if out of stock
+              const addButton = card.querySelector('.add-to-cart-btn');
+              if (product.stock === 0) {
+                addButton.disabled = true;
+                addButton.textContent = 'Out of Stock';
+              }
+            }
+          });
+        }
+      });
+    }
+    
+    // Show success modal (FIXED: accept 2 arguments instead of 3)
+    function showSuccessModal(orderId, total) {
+      document.getElementById('order-id').textContent = orderId;
+      document.getElementById('order-total').textContent = total;
+      
+      const pickupDisplay = document.getElementById('pickup-display');
+      const deliveryDisplay = document.getElementById('delivery-display');
+      const deliveryMethod = document.getElementById('delivery-method');
+      
+      if (state.deliveryOption === 'pickup') {
+        pickupDisplay.style.display = 'block';
+        deliveryDisplay.style.display = 'none';
+        deliveryMethod.textContent = 'Delivery Method: Self Pick-up';
+        
+        // Generate QR code with order ID
+        const qrData = `PICKUP:${orderId}`;
+        
+        document.getElementById('qrcode').innerHTML = '';
+        new QRCode(document.getElementById('qrcode'), {
+          text: qrData,
+          width: 180,
+          height: 180,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      } else {
+        pickupDisplay.style.display = 'none';
+        deliveryDisplay.style.display = 'block';
+        deliveryMethod.textContent = 'Delivery Method: Home Delivery';
+        document.getElementById('delivery-address').textContent = state.deliveryAddress;
+      }
+      
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('successModal'));
+      modal.show();
+    }
+
+    // Finalize order (updated to use backend)
+    function finalizeOrder() {
+      const orderItems = state.cart.map(item => ({
+        productId: item.id,
+        quantity: item.quantity
+      }));
+
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ items: orderItems })
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Show success modal with real order ID (FIXED: pass 2 args instead of 3)
+        showSuccessModal(data.orderId, data.total);
+        clearCart();
+      })
+      .catch(error => {
+        console.error('Error creating order:', error);
+        alert('Failed to place order. Please try again.');
+      });
+    }
+    
+    // Show toast
+    function showToast() {
+      const toast = new bootstrap.Toast(document.querySelector('.toast'));
+      toast.show();
+    }
+    
+    // Filter products
+    function filterProducts() {
+      state.filteredProducts = state.products.filter(product => {
+        // Category filter
+        const categoryMatch = state.currentCategory === 'all' || 
+                             product.category === state.currentCategory;
+        
+        // Search filter
+        const searchMatch = product.name.toLowerCase().includes(state.searchQuery.toLowerCase());
+        
+        return categoryMatch && searchMatch;
+      });
+      
+      renderProducts();
+      updateProductsCount();
+    }
+    
+    // Update products count
+    function updateProductsCount() {
+      document.getElementById('products-count').textContent = 
+        `${state.filteredProducts.length} products`;
+    }
+    
+    // Save cart to localStorage
+    function saveCartToStorage() {
+      localStorage.setItem('supermarketCart', JSON.stringify(state.cart));
+    }
+    
+    // Load cart from localStorage
+    function loadCartFromStorage() {
+      const savedCart = localStorage.getItem('supermarketCart');
+      if (savedCart) {
+        state.cart = JSON.parse(savedCart);
+        updateCart();
+      }
+    }
+    
+    // Initialize event listeners
+    function initEventListeners() {
+      // Add to cart buttons
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('.add-to-cart-btn')) {
+          const btn = e.target.closest('.add-to-cart-btn');
+          addToCart(
+            btn.dataset.id,
+            btn.dataset.name,
+            parseFloat(btn.dataset.price)
+          );
+        }
+      });
+      
+      // Cart quantity buttons
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('.cart-quantity-btn')) {
+          const btn = e.target.closest('.cart-quantity-btn');
+          handleQuantityChange(
+            parseInt(btn.dataset.index),
+            parseInt(btn.dataset.change)
+          );
+        }
+      });
+      
+      // Cart remove buttons
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('.cart-remove-btn')) {
+          const btn = e.target.closest('.cart-remove-btn');
+          handleRemoveItem(parseInt(btn.dataset.index));
+        }
+      });
+      
+      // Checkout button
+      document.getElementById('checkout-btn').addEventListener('click', showDeliveryOptions);
+      
+      // Clear cart button
+      document.getElementById('clear-cart-btn').addEventListener('click', () => {
+        if (state.cart.length > 0 && confirm('Are you sure you want to clear your cart?')) {
+          clearCart();
+        }
+      });
+      
+      // Category filters
+      document.querySelectorAll('.category-badge').forEach(badge => {
+        badge.addEventListener('click', () => {
+          document.querySelectorAll('.category-badge').forEach(b => 
+            b.classList.remove('active')
+          );
+          badge.classList.add('active');
+          state.currentCategory = badge.dataset.category;
+          filterProducts();
+        });
+      });
+      
+      // Search input
+      document.getElementById('search-input').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        filterProducts();
+      });
+      
+      // Delivery option selection
+      document.getElementById('pickup-option').addEventListener('click', () => {
+        state.deliveryOption = 'pickup';
+        document.getElementById('pickup-option').classList.add('selected');
+        document.getElementById('delivery-option').classList.remove('selected');
+        document.getElementById('address-section').style.display = 'none';
+        document.getElementById('confirm-order-btn').disabled = false;
+      });
+      
+      document.getElementById('delivery-option').addEventListener('click', () => {
+        state.deliveryOption = 'delivery';
+        document.getElementById('delivery-option').classList.add('selected');
+        document.getElementById('pickup-option').classList.remove('selected');
+        document.getElementById('address-section').style.display = 'block';
+        document.getElementById('confirm-order-btn').disabled = false;
+      });
+      
+      // Confirm order button
+      document.getElementById('confirm-order-btn').addEventListener('click', () => {
+        if (state.deliveryOption === 'delivery') {
+          // Validate address
+          const fullName = document.getElementById('full-name').value;
+          const streetAddress = document.getElementById('street-address').value;
+          const city = document.getElementById('city').value;
+          const stateVal = document.getElementById('state').value;
+          const zip = document.getElementById('zip').value;
+          const phone = document.getElementById('phone').value;
+          
+          if (!fullName || !streetAddress || !city || !stateVal || !zip || !phone) {
+            alert('Please fill in all address fields');
+            return;
+          }
+          
+          state.deliveryAddress = `${fullName}\n${streetAddress}\n${city}, ${stateVal} ${zip}\n${phone}`;
+        }
+        
+        // Close delivery options modal
+        bootstrap.Modal.getInstance(document.getElementById('deliveryOptionsModal')).hide();
+        
+        // Finalize the order
+        finalizeOrder();
+      });
+    }
+  </script>
+</body>
+</html>
